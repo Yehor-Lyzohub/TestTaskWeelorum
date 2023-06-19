@@ -2,7 +2,6 @@ package com.example.testtaskweelorum.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.testtaskweelorum.model.WorkoutData
 import com.example.testtaskweelorum.repository.FoodRepository
 import com.example.testtaskweelorum.repository.WorkoutRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,14 +18,14 @@ class MainViewModel : ViewModel() {
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
 
-    private val _food = MutableStateFlow(foodRepository.getAllFood())
+    val foodState = foodRepository.state
 
     val food = searchText
-        .combine(_food) { text, food ->
+        .combine(foodState) { text, food ->
             if (text.isBlank()) {
-                food
+                food.allFood
             } else {
-                food.filter {
+                food.allFood.filter {
                     it.doesMatchSearchQuery(text)
                 }
             }
@@ -34,69 +33,49 @@ class MainViewModel : ViewModel() {
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            _food.value
+            foodState.value.allFood
         )
-
-    private val _favFood = MutableStateFlow(foodRepository.getFavoriteFood())
-    val favFood = _favFood.asStateFlow()
-
-    private val _myFood = MutableStateFlow(foodRepository.getMyFood())
-    val myFood = _myFood.asStateFlow()
 
     private val _selectedTab = MutableStateFlow(FoodTab.SEARCH)
     val selectedTab = _selectedTab.asStateFlow()
 
-    private val _exerciseItem = MutableStateFlow(workoutRepository.allExerciseItems())
-    val exerciseItem = _exerciseItem.asStateFlow()
+    val exerciseItem = workoutRepository.state
 
     fun onSearchTextChange(text: String) {
         _searchText.value = text
     }
 
+    init {
+        foodRepository.getAllFood()
+        workoutRepository.getExercises()
+    }
+
+    private fun getFavoriteFood() {
+        foodRepository.getFavoriteFood()
+    }
+
+    private fun getMyFood() {
+        foodRepository.getMyFood()
+    }
+
     fun changeSelectedTab(newSelectedTab: FoodTab) {
+        when (newSelectedTab) {
+            FoodTab.SEARCH -> foodRepository.getAllFood()
+            FoodTab.FAVORITE -> getFavoriteFood()
+            FoodTab.MY_FOOD -> getMyFood()
+        }
         _selectedTab.value = newSelectedTab
     }
 
     fun expandTraining(id: String) {
-        val updatedExercises = _exerciseItem.value.map { workout ->
-            if (workout.id == id) {
-                workout.copy(isExpanded = !workout.isExpanded)
-            } else {
-                workout
-            }
-        }
-
-        _exerciseItem.value = updatedExercises
+        workoutRepository.expandTraining(id)
     }
 
     fun addSet(id: String) {
-        val updatedExercises = _exerciseItem.value.map { workout ->
-            if (workout.id == id) {
-                workout.copy(sets = workout.sets + listOf(WorkoutData.WorkoutSet((workout.sets.size + 1).toString(), "25.5кг х 12", 30, 15, false)))
-            } else {
-                workout
-            }
-        }
-
-        _exerciseItem.value = updatedExercises
+        workoutRepository.addSet(id)
     }
 
     fun finishSet(workoutId: String, setId: String) {
-        val updatedExercises = _exerciseItem.value.map { workout ->
-            if (workout.id == workoutId) {
-                val updatedSets = workout.sets.map { set ->
-                    if (set.id == setId) {
-                        set.copy(isDone = true)
-                    } else {
-                        set
-                    }
-                }
-                workout.copy(sets = updatedSets)
-            } else {
-                workout
-            }
-        }
-
-        _exerciseItem.value = updatedExercises
+        workoutRepository.finishSet(workoutId, setId)
     }
 }

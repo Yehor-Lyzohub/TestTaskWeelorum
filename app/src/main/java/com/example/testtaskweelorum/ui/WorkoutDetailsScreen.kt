@@ -184,7 +184,7 @@ fun WorkoutDescriptionSection() {
 @Composable
 fun WorkoutDetailsItem(exerciseItem: List<WorkoutData>, expand: (String) -> Unit, addSet: (String) -> Unit, finishSet: (String, String) -> Unit) {
 
-    LazyColumn() {
+    LazyColumn {
         items(exerciseItem) { exerciseItem ->
             ExpandableTrainingItem(exerciseItem, expand, addSet, finishSet)
         }
@@ -320,7 +320,7 @@ fun ExpandedTrainingView(sets: List<WorkoutData.WorkoutSet>, isExpanded: Boolean
         enter = expandTransition,
         exit = collapseTransition
     ) {
-        Column() {
+        Column {
             ExpandedTrainingHeader()
             sets.forEachIndexed { index, item ->
                 ExpandedTrainingDetails(item, index, finishSet)

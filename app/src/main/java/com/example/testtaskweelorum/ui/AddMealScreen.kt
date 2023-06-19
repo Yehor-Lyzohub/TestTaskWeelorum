@@ -88,8 +88,8 @@ fun AddMealScreen(navigateToTraining: () -> Unit) {
             }
             val food = when (selectedTab.value) {
                 FoodTab.SEARCH -> viewModel.food.collectAsState().value
-                FoodTab.FAVORITE -> viewModel.favFood.collectAsState().value
-                FoodTab.MY_FOOD -> viewModel.myFood.collectAsState().value
+                FoodTab.FAVORITE -> viewModel.foodState.collectAsState().value.favFood
+                FoodTab.MY_FOOD -> viewModel.foodState.collectAsState().value.myFood
             }
             FoodSection(
                 food = food,
